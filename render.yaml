@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: pod-validation-backend
+    env: node
+    region: singapore
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        sync: false
+      - key: UPLOAD_MAX_SIZE
+        value: 10485760
+      - key: TESSERACT_LANG
+        value: eng
+      - key: OCR_CONFIDENCE_THRESHOLD
+        value: 60
+      - key: BLUR_THRESHOLD
+        value: 100
+      - key: SIGNATURE_REQUIRED_COUNT
+        value: 2
+    healthCheckPath: /api/v1/health
