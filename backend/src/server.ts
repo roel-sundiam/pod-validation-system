@@ -49,29 +49,13 @@ const configureSecurityMiddleware = () => {
     })
   );
 
-  // CORS configuration
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:4200',
-    'https://pod-validation.netlify.app',
-    process.env.CORS_ORIGIN
-  ].filter(Boolean);
-
+  // CORS configuration - Allow Netlify frontend
   app.use(
     cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin) || process.env.CORS_ORIGIN === '*') {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      },
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      origin: '*',
+      credentials: false,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     })
   );
 
