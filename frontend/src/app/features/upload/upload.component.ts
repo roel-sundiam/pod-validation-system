@@ -290,10 +290,8 @@ export class UploadComponent {
 
             dialogData.stage = 'completed';
             dialogData.files.forEach((f) => (f.status = 'completed'));
-            // Extract validation data from response structure
-            dialogData.validationResult =
-              validationResponse?.data?.validation ||
-              validationResponse?.validation;
+            // Service already extracts data, so validationResponse.validation is the correct path
+            dialogData.validationResult = validationResponse?.validation;
             dialogData.deliveryId = deliveryId;
             dialogData.overallProgress = 100;
 
