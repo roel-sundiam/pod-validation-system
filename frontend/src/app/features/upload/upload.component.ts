@@ -48,9 +48,11 @@ interface UploadFile {
 export class UploadComponent {
   files: UploadFile[] = [];
   clientIdentifier: string = '';
+  existingDeliveryId: string = ''; // For appending to existing delivery
   isUploading = false;
   isDragging = false;
   private pollingSubscription?: Subscription;
+  readonly MAX_FILES_FREE_TIER = 2; // Render free tier limit
 
   constructor(
     private uploadService: UploadService,
@@ -101,6 +103,17 @@ export class UploadComponent {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/octet-stream', // For CSV files without proper MIME type
     ];
+
+    // Check if adding these files would exceed the limit
+    const totalAfterAdding = this.files.length + newFiles.length;
+    if (totalAfterAdding > this.MAX_FILES_FREE_TIER) {
+      this.snackBar.open(
+        `⚠️ Free tier limit: Maximum ${this.MAX_FILES_FREE_TIER} images per upload. Selected ${newFiles.length}, currently have ${this.files.length}.`,
+        'Close',
+        { duration: 5000, panelClass: ['warning-snackbar'] }
+      );
+      return;
+    }
 
     newFiles.forEach((file) => {
       if (
@@ -169,7 +182,11 @@ export class UploadComponent {
       });
 
       const response = await this.uploadService
-        .uploadFiles(filesToUpload, this.clientIdentifier || undefined)
+        .uploadFiles(
+          filesToUpload, 
+          this.clientIdentifier || undefined,
+          this.existingDeliveryId || undefined
+        )
         .toPromise();
 
       // Update to 30% after upload completes
@@ -220,8 +237,21 @@ export class UploadComponent {
       if (result?.action === 'viewDashboard') {
         this.router.navigate(['/dashboard']);
       } else if (result?.action === 'uploadMore') {
+        // Save delivery ID for appending more images
+        if (dialogData.deliveryId && !this.existingDeliveryId) {
+          this.existingDeliveryId = dialogData.deliveryId;
+          this.snackBar.open(
+            `💡 Upload 2 more images to add to this delivery (ID: ${this.existingDeliveryId.substring(0, 8)}...)`,
+            'Clear',
+            {
+              duration: 8000,
+            }
+          ).onAction().subscribe(() => {
+            this.existingDeliveryId = '';
+          });
+        }
         this.files = [];
-        this.clientIdentifier = '';
+        // Keep clientIdentifier and existingDeliveryId for next batch
       }
     });
   }

@@ -361,22 +361,21 @@ export const processDelivery = async (deliveryId: string): Promise<void> => {
     // Get all POD IDs
     const podIds = delivery.documents.map(doc => doc.podId.toString());
 
-    // Process all PODs in parallel
-    logger.info('Processing individual documents', {
+    // Process all PODs SEQUENTIALLY to avoid memory issues on free tier (512MB limit)
+    // Parallel processing with Promise.all would load multiple images into memory at once
+    logger.info('Processing individual documents sequentially', {
       deliveryId,
       documentCount: podIds.length
     });
 
-    await Promise.all(
-      podIds.map(async (podId) => {
-        try {
-          await processPOD(podId);
-        } catch (error) {
-          logger.error('Error processing POD in delivery', { deliveryId, podId, error });
-          // Continue with other documents
-        }
-      })
-    );
+    for (const podId of podIds) {
+      try {
+        await processPOD(podId);
+      } catch (error) {
+        logger.error('Error processing POD in delivery', { deliveryId, podId, error });
+        // Continue with other documents
+      }
+    }
 
     logger.info('Individual documents processed, starting delivery-level validation', {
       deliveryId

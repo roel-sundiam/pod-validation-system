@@ -26,6 +26,7 @@ export const uploadDelivery = asyncHandler(
     const files = req.files as Express.Multer.File[];
     const clientIdentifier = req.body.clientIdentifier as string | undefined;
     const deliveryReference = req.body.deliveryReference as string | undefined;
+    const existingDeliveryId = req.body.deliveryId as string | undefined;
 
     if (!files || files.length === 0) {
       throw new AppError("No files uploaded", 400, "NO_FILES");
@@ -35,6 +36,7 @@ export const uploadDelivery = asyncHandler(
       fileCount: files.length,
       clientIdentifier,
       deliveryReference,
+      existingDeliveryId,
       files: files.map((f) => ({
         name: f.originalname,
         size: f.size,
@@ -42,27 +44,49 @@ export const uploadDelivery = asyncHandler(
       })),
     });
 
-    // Generate delivery reference if not provided
-    const finalDeliveryReference =
-      deliveryReference || `DEL-${Date.now()}-${uuidv4().substring(0, 8)}`;
-
     // Create job ID for tracking
     const jobId = uuidv4();
 
-    // Create delivery document
-    const delivery = new DeliveryModel({
-      deliveryReference: finalDeliveryReference,
-      clientIdentifier,
-      uploadedAt: new Date(),
-      status: "UPLOADED",
-      documents: [],
-    });
+    let delivery;
+    let isAppending = false;
 
-    await delivery.save();
+    // Check if appending to existing delivery
+    if (existingDeliveryId) {
+      delivery = await DeliveryModel.findById(existingDeliveryId);
+      
+      if (!delivery) {
+        throw new AppError("Delivery not found", 404, "DELIVERY_NOT_FOUND");
+      }
+
+      isAppending = true;
+      delivery.status = "UPLOADED"; // Reset to UPLOADED for reprocessing
+
+      logger.info("Appending to existing delivery", {
+        deliveryId: delivery._id.toString(),
+        existingDocCount: delivery.documents.length,
+        newFileCount: files.length,
+      });
+    } else {
+      // Generate delivery reference if not provided
+      const finalDeliveryReference =
+        deliveryReference || `DEL-${Date.now()}-${uuidv4().substring(0, 8)}`;
+
+      // Create new delivery document
+      delivery = new DeliveryModel({
+        deliveryReference: finalDeliveryReference,
+        clientIdentifier,
+        uploadedAt: new Date(),
+        status: "UPLOADED",
+        documents: [],
+      });
+
+      await delivery.save();
+    }
 
     logger.info("Delivery document created", {
       deliveryId: delivery._id.toString(),
-      deliveryReference: finalDeliveryReference,
+      deliveryReference: delivery.deliveryReference,
+      isAppending,
     });
 
     // Create POD documents for each file
@@ -144,7 +168,7 @@ export const uploadDelivery = asyncHandler(
             mimeType: file.mimetype,
             clientIdentifier,
             deliveryId: delivery._id.toString(),
-            deliveryReference: finalDeliveryReference,
+            deliveryReference: delivery.deliveryReference,
           },
           {
             ipAddress: req.ip,
@@ -170,11 +194,12 @@ export const uploadDelivery = asyncHandler(
     await delivery.save();
 
     // Create audit log for delivery
-    await createAuditLog(delivery._id, "UPLOAD", {
-      deliveryReference: finalDeliveryReference,
+    await createAuditLog(delivery._id, isAppending ? "UPDATE" : "UPLOAD", {
+      deliveryReference: delivery.deliveryReference,
       clientIdentifier,
       documentCount: delivery.documents.length,
       jobId,
+      isAppending,
     });
 
     // Start async processing
@@ -197,6 +222,9 @@ export const uploadDelivery = asyncHandler(
         filesReceived: files.length,
         estimatedProcessingTime,
       },
+      message: isAppending 
+        ? `Added ${files.length} images to existing delivery. Total: ${delivery.documents.length} images.`
+        : `Created new delivery with ${files.length} images.`,
     };
 
     res.status(200).json(response);

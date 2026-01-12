@@ -13,6 +13,7 @@ export class UploadService {
   uploadFiles(
     files: File[],
     clientIdentifier?: string,
+    existingDeliveryId?: string,
     expectedData?: any
   ): Observable<UploadResponse> {
     const formData = new FormData();
@@ -25,6 +26,10 @@ export class UploadService {
     // Append optional data
     if (clientIdentifier) {
       formData.append('clientIdentifier', clientIdentifier);
+    }
+
+    if (existingDeliveryId) {
+      formData.append('deliveryId', existingDeliveryId);
     }
 
     if (expectedData) {

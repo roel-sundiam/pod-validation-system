@@ -24,6 +24,28 @@
         <mat-hint>Select client identifier for delivery validation</mat-hint>
       </mat-form-field>
 
+      <!-- Existing Delivery ID Info (if appending) -->
+      <div *ngIf="existingDeliveryId" class="delivery-append-banner">
+        <mat-icon>add_circle_outline</mat-icon>
+        <div class="banner-content">
+          <strong>Appending to Delivery:</strong> {{ existingDeliveryId.substring(0, 12) }}...
+          <br>
+          <small>New images will be added to this existing delivery</small>
+        </div>
+        <button mat-icon-button (click)="existingDeliveryId = ''" matTooltip="Start new delivery">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Free Tier Warning -->
+      <div class="free-tier-banner">
+        <mat-icon>info</mat-icon>
+        <span>
+          <strong>Free Tier Limit:</strong> Maximum {{ MAX_FILES_FREE_TIER }} images per upload.
+          For more images, upload in batches of {{ MAX_FILES_FREE_TIER }}.
+        </span>
+      </div>
+
       <!-- Drag and Drop Zone -->
       <div
         class="dropzone"
