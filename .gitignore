@@ -60,3 +60,6 @@ Thumbs.db
 *.pptx
 *.ppt
 *.docx
+
+# Local Netlify folder
+.netlify

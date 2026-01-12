@@ -1,6 +1,6 @@
 [build]
   base = "frontend"
-  command = "npm install && npm run build"
+  command = "echo 'Build already done'"
   publish = "frontend/dist/frontend/browser"
 
 [[redirects]]
