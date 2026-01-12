@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "start": "node dist/backend/src/server.js",
+    "start": "node --expose-gc --max-old-space-size=384 dist/backend/src/server.js",
     "test": "echo \"Tests to be implemented\" && exit 0"
   },
   "dependencies": {

@@ -22,6 +22,8 @@ const logger = createModuleLogger("OCRService");
  */
 let workerPool: Worker[] = [];
 const WORKER_POOL_SIZE = 1; // Reduced for low-memory environments
+let lastWorkerUsage = Date.now();
+const WORKER_IDLE_TIMEOUT = 60000; // Terminate idle workers after 60 seconds
 
 /**
  * Initialize Tesseract Worker Pool
@@ -269,16 +271,44 @@ export const extractText = async (
   try {
     logger.info("Extracting text from file", { filePath, mimeType });
 
+    let result: OCRResult;
+    
     if (mimeType === "application/pdf") {
-      return await extractTextFromPDFDocument(filePath);
+      result = await extractTextFromPDFDocument(filePath);
     } else if (mimeType.startsWith("image/")) {
-      return await extractTextFromImage(filePath);
+      result = await extractTextFromImage(filePath);
     } else {
       throw new Error(`Unsupported file type for OCR: ${mimeType}`);
     }
+
+    // Aggressive memory cleanup for free tier (512MB limit)
+    // Force garbage collection if available
+    if (global.gc) {
+      logger.debug("Triggering garbage collection after OCR");
+      global.gc();
+    }
+
+    lastWorkerUsage = Date.now();
+    
+    return result;
   } catch (error) {
     logger.error("Error extracting text", { filePath, mimeType, error });
     throw error;
+  }
+};
+
+/**
+ * Terminate idle workers to free memory
+ */
+const terminateIdleWorkers = async (): Promise<void> => {
+  const idleTime = Date.now() - lastWorkerUsage;
+  
+  if (idleTime > WORKER_IDLE_TIMEOUT && workerPool.length > 0) {
+    logger.info("Terminating idle Tesseract workers to free memory", {
+      idleTimeSeconds: Math.floor(idleTime / 1000)
+    });
+    
+    await cleanupWorkerPool();
   }
 };
 
@@ -295,6 +325,9 @@ export const cleanupWorkerPool = async (): Promise<void> => {
   workerPool = [];
   logger.info("Tesseract worker pool cleaned up");
 };
+
+// Periodically check and terminate idle workers
+setInterval(terminateIdleWorkers, 30000); // Check every 30 seconds
 
 // Handle process termination
 process.on("SIGINT", async () => {
