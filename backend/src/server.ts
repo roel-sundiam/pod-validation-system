@@ -52,7 +52,7 @@ const configureSecurityMiddleware = () => {
   // CORS configuration - Allow Netlify frontend
   app.use(
     cors({
-      origin: '*',
+      origin: "*",
       credentials: false,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
