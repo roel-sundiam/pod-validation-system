@@ -284,8 +284,8 @@ export class UploadComponent {
 
             dialogData.stage = 'completed';
             dialogData.files.forEach((f) => (f.status = 'completed'));
-            // validationResponse is already DeliveryValidationResponse, extract the validation property
-            dialogData.validationResult = validationResponse?.validation;
+            // Extract validation data from response structure
+            dialogData.validationResult = validationResponse?.data?.validation || validationResponse?.validation;
             dialogData.deliveryId = deliveryId;
             dialogData.overallProgress = 100;
 
