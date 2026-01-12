@@ -1,0 +1,546 @@
+<div class="progress-dialog">
+  <!-- SECTION 1: Upload Progress & Status -->
+  <div class="section-upload">
+    <!-- Header with Stage Icon -->
+    <div class="dialog-header" [ngClass]="'stage-' + data.stage">
+      <div class="icon-container">
+        <mat-icon class="stage-icon">{{ getStageIcon() }}</mat-icon>
+        <div
+          class="progress-circle"
+          *ngIf="data.stage !== 'completed' && data.stage !== 'failed'"
+        >
+          <span class="progress-percentage">{{ data.overallProgress }}%</span>
+        </div>
+      </div>
+      <h2 class="stage-title">{{ getStageTitle() }}</h2>
+      <p class="stage-message">{{ getStageMessage() }}</p>
+
+      <!-- Progress Bar -->
+      <div
+        class="progress-bar-container"
+        *ngIf="data.stage !== 'completed' && data.stage !== 'failed'"
+      >
+        <mat-progress-bar
+          mode="determinate"
+          [value]="data.overallProgress"
+          class="overall-progress"
+        >
+        </mat-progress-bar>
+        <span class="progress-label">{{ data.overallProgress }}% Complete</span>
+      </div>
+    </div>
+
+    <!-- Files Progress List -->
+    <div class="files-container">
+      <div
+        class="file-item"
+        *ngFor="let file of data.files"
+        [ngClass]="'file-' + file.status"
+      >
+        <div class="file-header">
+          <mat-icon class="file-icon">
+            <ng-container [ngSwitch]="file.status">
+              <ng-container *ngSwitchCase="'uploading'"
+                >cloud_upload</ng-container
+              >
+              <ng-container *ngSwitchCase="'processing'">settings</ng-container>
+              <ng-container *ngSwitchCase="'completed'"
+                >check_circle</ng-container
+              >
+              <ng-container *ngSwitchCase="'failed'">error</ng-container>
+            </ng-container>
+          </mat-icon>
+          <div class="file-details">
+            <span class="file-name">{{ file.name }}</span>
+            <span class="file-size">{{ formatFileSize(file.size) }}</span>
+          </div>
+          <span class="file-status-badge">
+            {{ file.status | titlecase }}
+          </span>
+        </div>
+
+        <!-- Progress Bar -->
+        <mat-progress-bar
+          *ngIf="file.status === 'uploading' || file.status === 'processing'"
+          mode="indeterminate"
+          class="file-progress"
+        >
+        </mat-progress-bar>
+      </div>
+    </div>
+
+    <!-- Overall Progress Spinner (During Upload/Processing) -->
+    <div
+      class="progress-spinner-container"
+      *ngIf="data.stage === 'uploading' || data.stage === 'processing'"
+    >
+      <mat-spinner diameter="60" class="progress-spinner"></mat-spinner>
+      <p class="progress-text">
+        <ng-container *ngIf="data.stage === 'uploading'">
+          Uploading {{ data.files.length }} file(s)...
+        </ng-container>
+        <ng-container *ngIf="data.stage === 'processing'">
+          Processing and validating documents...
+        </ng-container>
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Validation Results (Scrollable) -->
+  <div
+    class="section-validation"
+    *ngIf="data.stage === 'completed' && data.validationResult"
+  >
+    <div class="section-header">
+      <mat-icon>assignment_turned_in</mat-icon>
+      <h3>Validation Results</h3>
+    </div>
+
+    <div class="validation-scroll-container">
+      <div class="validation-results">
+        <div class="result-card" [ngClass]="getValidationStatusClass()">
+          <div class="result-header">
+            <mat-icon class="result-icon">{{
+              getValidationStatusIcon()
+            }}</mat-icon>
+            <div class="result-info">
+              <h3 class="result-title">
+                Validation
+                {{ data.validationResult.status || "Unknown" }}
+              </h3>
+              <p class="result-subtitle">Delivery ID: {{ data.deliveryId }}</p>
+            </div>
+          </div>
+
+          <!-- Validation Summary -->
+          <div
+            class="validation-summary"
+            *ngIf="data.validationResult.validation"
+          >
+            <div class="summary-item">
+              <span class="summary-label">Documents Processed:</span>
+              <span class="summary-value">{{ data.files.length }}</span>
+            </div>
+            <div
+              class="summary-item"
+              *ngIf="data.validationResult.validation.peculiarities"
+            >
+              <span class="summary-label">Issues Found:</span>
+              <span class="summary-value">{{
+                data.validationResult.validation.peculiarities.length
+              }}</span>
+            </div>
+            <div
+              class="summary-item"
+              *ngIf="data.validationResult.validation.crossDocumentChecks"
+            >
+              <span class="summary-label">Cross-Document Checks:</span>
+              <span class="summary-value">{{
+                data.validationResult.validation.crossDocumentChecks.length
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Detailed Validation Checks -->
+          <div
+            class="validation-checks"
+            *ngIf="data.validationResult?.checklist"
+          >
+            <!-- Document Completeness Checks -->
+            <div
+              class="check-section"
+              *ngIf="
+                data.validationResult.checklist?.documentCompleteness?.length >
+                0
+              "
+            >
+              <div class="check-header">
+                <mat-icon class="check-icon">fact_check</mat-icon>
+                <h4 class="check-title">Document Completeness</h4>
+              </div>
+              <div class="check-details">
+                <div
+                  class="check-row"
+                  *ngFor="
+                    let check of data.validationResult.checklist
+                      .documentCompleteness
+                  "
+                >
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="getCheckStatusClass(check.status)"
+                  >
+                    {{ getCheckStatusIcon(check.status) }}
+                  </mat-icon>
+                  <div class="check-content">
+                    <span class="check-label">{{ check.name }}</span>
+                    <span class="check-detail">
+                      {{ check.message }}
+                      <span *ngIf="check.details" class="check-details-info">
+                        {{ formatCheckDetails(check.details) }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Document-Specific Checks -->
+            <div
+              class="check-section"
+              *ngFor="
+                let docChecks of data.validationResult.checklist
+                  ?.documentSpecificChecks
+              "
+            >
+              <div class="check-header">
+                <mat-icon class="check-icon">description</mat-icon>
+                <h4 class="check-title">
+                  {{ docChecks.documentType | titlecase }} Validation
+                </h4>
+              </div>
+              <div class="check-details">
+                <div class="check-row" *ngFor="let check of docChecks.checks">
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="getCheckStatusClass(check.status)"
+                  >
+                    {{ getCheckStatusIcon(check.status) }}
+                  </mat-icon>
+                  <div class="check-content">
+                    <span class="check-label">{{ check.name }}</span>
+                    <span class="check-detail">
+                      {{ check.message }}
+                      <span *ngIf="check.details" class="check-details-info">
+                        {{ formatCheckDetails(check.details) }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cross-Document Checks -->
+            <div
+              class="check-section"
+              *ngIf="
+                data.validationResult.checklist?.crossDocumentChecks?.length > 0
+              "
+            >
+              <div class="check-header">
+                <mat-icon class="check-icon">compare_arrows</mat-icon>
+                <h4 class="check-title">Cross-Document Verification</h4>
+              </div>
+              <div class="check-details">
+                <div
+                  class="check-row"
+                  *ngFor="
+                    let check of data.validationResult.checklist
+                      .crossDocumentChecks
+                  "
+                >
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="getCheckStatusClass(check.status)"
+                  >
+                    {{ getCheckStatusIcon(check.status) }}
+                  </mat-icon>
+                  <div class="check-content">
+                    <span class="check-label">{{ check.name }}</span>
+                    <span class="check-detail">
+                      {{ check.message }}
+                      <span *ngIf="check.details" class="check-details-info">
+                        {{ formatCheckDetails(check.details) }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legacy validation checks display (if no checklist available) -->
+          <div
+            class="validation-checks"
+            *ngIf="!data.validationResult.checklist && data.validationResult"
+          >
+            <!-- Signature Validation -->
+            <div
+              class="check-section"
+              *ngIf="data.validationResult.validation.signatures"
+            >
+              <div class="check-header">
+                <mat-icon class="check-icon">edit</mat-icon>
+                <h4 class="check-title">Signature Verification</h4>
+              </div>
+              <div class="check-details">
+                <div class="check-row">
+                  <span class="check-label">Expected Signatures:</span>
+                  <span class="check-value">{{
+                    data.validationResult.validation.signatures.expected || 2
+                  }}</span>
+                </div>
+                <div class="check-row">
+                  <span class="check-label">Found Signatures:</span>
+                  <span
+                    class="check-value"
+                    [ngClass]="
+                      data.validationResult.validation.signatures.found >= 2
+                        ? 'status-pass'
+                        : 'status-warning'
+                    "
+                  >
+                    {{ data.validationResult.validation.signatures.found || 0 }}
+                  </span>
+                </div>
+                <div
+                  class="check-row"
+                  *ngIf="
+                    data.validationResult.validation.signatures.driver !==
+                    undefined
+                  "
+                >
+                  <span class="check-label">Driver Signature:</span>
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="
+                      data.validationResult.validation.signatures.driver
+                        ? 'status-pass'
+                        : 'status-fail'
+                    "
+                  >
+                    {{
+                      data.validationResult.validation.signatures.driver
+                        ? "check_circle"
+                        : "cancel"
+                    }}
+                  </mat-icon>
+                </div>
+                <div
+                  class="check-row"
+                  *ngIf="
+                    data.validationResult.validation.signatures.receiver !==
+                    undefined
+                  "
+                >
+                  <span class="check-label">Receiver Signature:</span>
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="
+                      data.validationResult.validation.signatures.receiver
+                        ? 'status-pass'
+                        : 'status-fail'
+                    "
+                  >
+                    {{
+                      data.validationResult.validation.signatures.receiver
+                        ? "check_circle"
+                        : "cancel"
+                    }}
+                  </mat-icon>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Quality Checks -->
+            <div
+              class="check-section"
+              *ngIf="data.validationResult.validation.imageQuality"
+            >
+              <div class="check-header">
+                <mat-icon class="check-icon">image</mat-icon>
+                <h4 class="check-title">Document Quality</h4>
+              </div>
+              <div class="check-details">
+                <div
+                  class="check-row"
+                  *ngIf="
+                    data.validationResult.validation.imageQuality.blurry !==
+                    undefined
+                  "
+                >
+                  <span class="check-label">Image Clarity:</span>
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="
+                      !data.validationResult.validation.imageQuality.blurry
+                        ? 'status-pass'
+                        : 'status-warning'
+                    "
+                  >
+                    {{
+                      !data.validationResult.validation.imageQuality.blurry
+                        ? "check_circle"
+                        : "warning"
+                    }}
+                  </mat-icon>
+                  <span class="check-detail">{{
+                    data.validationResult.validation.imageQuality.blurry
+                      ? "Blurry detected"
+                      : "Clear"
+                  }}</span>
+                </div>
+                <div
+                  class="check-row"
+                  *ngIf="
+                    data.validationResult.validation.imageQuality.contrast !==
+                    undefined
+                  "
+                >
+                  <span class="check-label">Contrast:</span>
+                  <span
+                    class="check-value"
+                    [ngClass]="
+                      data.validationResult.validation.imageQuality.contrast ===
+                      'good'
+                        ? 'status-pass'
+                        : 'status-warning'
+                    "
+                  >
+                    {{
+                      data.validationResult.validation.imageQuality.contrast
+                        | titlecase
+                    }}
+                  </span>
+                </div>
+                <div
+                  class="check-row"
+                  *ngIf="
+                    data.validationResult.validation.imageQuality.complete !==
+                    undefined
+                  "
+                >
+                  <span class="check-label">Document Completeness:</span>
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="
+                      data.validationResult.validation.imageQuality.complete
+                        ? 'status-pass'
+                        : 'status-fail'
+                    "
+                  >
+                    {{
+                      data.validationResult.validation.imageQuality.complete
+                        ? "check_circle"
+                        : "cancel"
+                    }}
+                  </mat-icon>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items/Quantity Validation -->
+            <div
+              class="check-section"
+              *ngIf="data.validationResult.validation.items"
+            >
+              <div class="check-header">
+                <mat-icon class="check-icon">inventory_2</mat-icon>
+                <h4 class="check-title">Item Verification</h4>
+              </div>
+              <div class="check-details">
+                <div class="check-row">
+                  <span class="check-label">Quantities Match:</span>
+                  <mat-icon
+                    class="status-icon"
+                    [ngClass]="
+                      data.validationResult.validation.items.matched
+                        ? 'status-pass'
+                        : 'status-fail'
+                    "
+                  >
+                    {{
+                      data.validationResult.validation.items.matched
+                        ? "check_circle"
+                        : "cancel"
+                    }}
+                  </mat-icon>
+                </div>
+                <div
+                  class="check-row"
+                  *ngIf="data.validationResult.validation.items.discrepancies"
+                >
+                  <span class="check-label">Discrepancies:</span>
+                  <span class="check-value status-warning">{{
+                    data.validationResult.validation.items.discrepancies
+                  }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peculiarities List -->
+        <div
+          class="peculiarities-list"
+          *ngIf="data.validationResult?.peculiarities?.length > 0"
+        >
+          <h4 class="peculiarities-title">
+            <mat-icon>warning</mat-icon>
+            Issues Detected
+          </h4>
+          <div
+            class="peculiarity-item"
+            *ngFor="
+              let peculiarity of data.validationResult.peculiarities.slice(0, 5)
+            "
+          >
+            <mat-icon class="peculiarity-icon">{{
+              peculiarity.severity === "HIGH" ? "error" : "warning"
+            }}</mat-icon>
+            <div class="peculiarity-content">
+              <span class="peculiarity-message">{{ peculiarity.message }}</span>
+              <span
+                class="peculiarity-severity"
+                [ngClass]="'severity-' + peculiarity.severity?.toLowerCase()"
+              >
+                {{ peculiarity.severity }}
+              </span>
+            </div>
+          </div>
+          <p
+            class="view-more"
+            *ngIf="data.validationResult.peculiarities.length > 5"
+          >
+            +
+            {{ data.validationResult.peculiarities.length - 5 }} more issues
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message (If Failed) -->
+  <div class="error-container" *ngIf="data.stage === 'failed'">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <p class="error-message">Something went wrong. Please try again.</p>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="dialog-actions">
+    <button
+      mat-button
+      *ngIf="data.stage === 'completed' || data.stage === 'failed'"
+      (click)="closeDialog()"
+    >
+      Close
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      *ngIf="data.stage === 'completed'"
+      (click)="viewDashboard()"
+    >
+      <mat-icon>dashboard</mat-icon>
+      View Dashboard
+    </button>
+    <button
+      mat-stroked-button
+      *ngIf="data.stage === 'completed' || data.stage === 'failed'"
+      (click)="uploadMore()"
+    >
+      <mat-icon>cloud_upload</mat-icon>
+      Upload More
+    </button>
+  </div>
+</div>

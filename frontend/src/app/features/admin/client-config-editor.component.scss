@@ -1,0 +1,164 @@
+.config-editor-container {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .back-button {
+    margin-right: 8px;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 24px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  gap: 16px;
+}
+
+.section-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  mat-card-subtitle {
+    margin-left: 32px;
+    color: #666;
+  }
+
+  mat-card-content {
+    padding-top: 16px;
+  }
+}
+
+.form-row {
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.enable-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+
+  mat-checkbox {
+    font-size: 16px;
+  }
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 16px 0;
+
+  mat-checkbox {
+    display: flex;
+    align-items: flex-start;
+
+    strong {
+      font-weight: 600;
+    }
+  }
+}
+
+.section-divider {
+  margin: 24px 0;
+}
+
+.action-card {
+  margin-top: 32px;
+  background-color: #fafafa;
+
+  mat-card-actions {
+    display: flex;
+    gap: 12px;
+    padding: 24px;
+    margin: 0;
+
+    button {
+      min-width: 200px;
+      height: 48px;
+      font-size: 16px;
+
+      mat-spinner {
+        margin-right: 8px;
+        display: inline-block;
+      }
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .config-editor-container {
+    padding: 16px;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-card mat-card-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+/* Form validation styles */
+mat-form-field {
+  &.ng-invalid.ng-touched {
+    .mat-form-field-outline {
+      color: #f44336 !important;
+    }
+  }
+}
+
+/* Disabled state */
+button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

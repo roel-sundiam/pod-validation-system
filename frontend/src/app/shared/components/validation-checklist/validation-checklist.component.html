@@ -1,0 +1,286 @@
+<div class="validation-checklist" *ngIf="checklist">
+  <!-- DEBUG: Document Types Panel -->
+  <mat-card
+    class="debug-card"
+    *ngIf="showDebug && documents && documents.length > 0"
+    style="background: #fff3cd; border: 2px solid #ffc107; margin-bottom: 20px"
+  >
+    <mat-card-header>
+      <mat-card-title style="color: #856404">
+        <mat-icon style="color: #856404">bug_report</mat-icon>
+        DEBUG: Detected Document Types
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div style="font-family: monospace; font-size: 13px">
+        <div
+          *ngFor="let doc of documents; let i = index"
+          style="padding: 8px; border-bottom: 1px solid #ddd"
+        >
+          <div>
+            <strong>Document {{ i + 1 }}:</strong>
+            <span style="color: #0066cc; font-weight: bold; margin-left: 10px">
+              {{ doc.detectedType || "UNKNOWN" }}
+            </span>
+            <span style="color: #666; margin-left: 10px">
+              (podId: {{ doc.podId }})
+            </span>
+          </div>
+          <div
+            style="
+              margin-left: 20px;
+              margin-top: 5px;
+              color: #666;
+              font-size: 11px;
+            "
+          >
+            <a
+              [href]="'http://localhost:3000/api/v1/pods/' + doc.podId"
+              target="_blank"
+              style="color: #0066cc"
+            >
+              View Full POD Data (including OCR text)
+            </a>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Summary Card - Section D: Overall Validation Result -->
+  <mat-card class="summary-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon
+          [class]="
+            getStatusClass(
+              checklist.overallStatus === 'PASS'
+                ? 'PASSED'
+                : checklist.overallStatus === 'FAIL'
+                ? 'FAILED'
+                : 'WARNING'
+            )
+          "
+        >
+          {{
+            checklist.overallStatus === "PASS"
+              ? "check_circle"
+              : checklist.overallStatus === "FAIL"
+              ? "cancel"
+              : "warning"
+          }}
+        </mat-icon>
+        Super 8 POD Validation Checklist
+      </mat-card-title>
+      <mat-card-subtitle>{{ checklist.summary }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="stats-row">
+        <mat-chip-set>
+          <mat-chip
+            class="stat-chip passed"
+            *ngIf="getOverallStats().passed > 0"
+          >
+            <mat-icon>check_circle</mat-icon>
+            {{ getOverallStats().passed }} Passed
+          </mat-chip>
+          <mat-chip
+            class="stat-chip failed"
+            *ngIf="getOverallStats().failed > 0"
+          >
+            <mat-icon>cancel</mat-icon>
+            {{ getOverallStats().failed }} Failed
+          </mat-chip>
+          <mat-chip
+            class="stat-chip warning"
+            *ngIf="getOverallStats().warning > 0"
+          >
+            <mat-icon>warning</mat-icon>
+            {{ getOverallStats().warning }} Warnings
+          </mat-chip>
+          <mat-chip class="stat-chip na" *ngIf="getOverallStats().na > 0">
+            <mat-icon>remove_circle_outline</mat-icon>
+            {{ getOverallStats().na }} N/A
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section A: Pallet Validation -->
+  <mat-expansion-panel class="section-panel section-a" [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <span class="section-letter">A</span>
+        <mat-icon>inventory</mat-icon>
+        Pallet Validation
+        <span class="badge"
+          >{{ checklist.documentCompleteness.length }} checks</span
+        >
+      </mat-panel-title>
+      <mat-panel-description>
+        <span class="mini-stats">
+          <span
+            class="passed-count"
+            *ngIf="getCheckCount(checklist.documentCompleteness, 'PASSED') > 0"
+          >
+            ✓ {{ getCheckCount(checklist.documentCompleteness, "PASSED") }}
+          </span>
+          <span
+            class="failed-count"
+            *ngIf="getCheckCount(checklist.documentCompleteness, 'FAILED') > 0"
+          >
+            ✗ {{ getCheckCount(checklist.documentCompleteness, "FAILED") }}
+          </span>
+        </span>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <div class="checks-list">
+      <div
+        class="check-item"
+        *ngFor="let check of checklist.documentCompleteness"
+        [class]="getStatusClass(check.status)"
+      >
+        <mat-icon [class]="getStatusClass(check.status)">
+          {{ getStatusIcon(check.status) }}
+        </mat-icon>
+        <div class="check-content">
+          <div class="check-name">{{ check.name }}</div>
+          <div class="check-message">{{ check.message }}</div>
+          <div class="check-details" *ngIf="check.details">
+            {{ formatCheckDetails(check.details) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-expansion-panel>
+
+  <!-- Section B: Ship Document Validation -->
+  <mat-expansion-panel
+    class="section-panel section-b"
+    *ngIf="getShipDocumentSection()"
+    [expanded]="true"
+  >
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <span class="section-letter">B</span>
+        <mat-icon>local_shipping</mat-icon>
+        Ship Document Validation
+        <span class="badge"
+          >{{ getShipDocumentSection()?.checks.length || 0 }} checks</span
+        >
+      </mat-panel-title>
+      <mat-panel-description>
+        <span class="mini-stats">
+          <span
+            class="passed-count"
+            *ngIf="
+              getCheckCount(getShipDocumentSection()?.checks || [], 'PASSED') >
+              0
+            "
+          >
+            ✓
+            {{
+              getCheckCount(getShipDocumentSection()?.checks || [], "PASSED")
+            }}
+          </span>
+          <span
+            class="failed-count"
+            *ngIf="
+              getCheckCount(getShipDocumentSection()?.checks || [], 'FAILED') >
+              0
+            "
+          >
+            ✗
+            {{
+              getCheckCount(getShipDocumentSection()?.checks || [], "FAILED")
+            }}
+          </span>
+        </span>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <div class="checks-list">
+      <div
+        class="check-item"
+        *ngFor="let check of getShipDocumentSection()?.checks"
+        [class]="getStatusClass(check.status)"
+      >
+        <mat-icon [class]="getStatusClass(check.status)">
+          {{ getStatusIcon(check.status) }}
+        </mat-icon>
+        <div class="check-content">
+          <div class="check-name">{{ check.name }}</div>
+          <div class="check-message">{{ check.message }}</div>
+          <div class="check-details" *ngIf="check.details">
+            {{ formatCheckDetails(check.details) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-expansion-panel>
+
+  <!-- Section C: Invoice Validation -->
+  <mat-expansion-panel
+    class="section-panel section-c"
+    *ngIf="getInvoiceSection()"
+    [expanded]="true"
+  >
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <span class="section-letter">C</span>
+        <mat-icon>receipt</mat-icon>
+        Invoice Validation
+        <span class="badge"
+          >{{ getInvoiceSection()?.checks.length || 0 }} checks</span
+        >
+      </mat-panel-title>
+      <mat-panel-description>
+        <span class="mini-stats">
+          <span
+            class="passed-count"
+            *ngIf="
+              getCheckCount(getInvoiceSection()?.checks || [], 'PASSED') > 0
+            "
+          >
+            ✓ {{ getCheckCount(getInvoiceSection()?.checks || [], "PASSED") }}
+          </span>
+          <span
+            class="failed-count"
+            *ngIf="
+              getCheckCount(getInvoiceSection()?.checks || [], 'FAILED') > 0
+            "
+          >
+            ✗ {{ getCheckCount(getInvoiceSection()?.checks || [], "FAILED") }}
+          </span>
+        </span>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <div class="checks-list">
+      <div
+        class="check-item"
+        *ngFor="let check of getInvoiceSection()?.checks"
+        [class]="getStatusClass(check.status)"
+      >
+        <mat-icon [class]="getStatusClass(check.status)">
+          {{ getStatusIcon(check.status) }}
+        </mat-icon>
+        <div class="check-content">
+          <div class="check-name">{{ check.name }}</div>
+          <div class="check-message">{{ check.message }}</div>
+          <div class="check-details" *ngIf="check.details">
+            {{ formatCheckDetails(check.details) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-expansion-panel>
+</div>
+
+<div class="no-checklist" *ngIf="!checklist">
+  <mat-icon>info</mat-icon>
+  <p>No validation checklist available</p>
+</div>

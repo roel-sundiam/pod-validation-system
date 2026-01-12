@@ -1,0 +1,320 @@
+<div class="document-viewer-container">
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading POD document...</p>
+  </div>
+
+  <!-- Document Content -->
+  <div class="document-content" *ngIf="!isLoading && pod">
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button mat-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Dashboard
+      </button>
+      <div class="actions-right">
+        <button mat-raised-button color="primary" (click)="downloadFile()">
+          <mat-icon>download</mat-icon>
+          Download
+        </button>
+        <button mat-raised-button color="accent" (click)="reprocess()" [disabled]="isReprocessing">
+          <mat-icon>refresh</mat-icon>
+          {{ isReprocessing ? 'Reprocessing...' : 'Reprocess' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- File Metadata Card -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>description</mat-icon>
+        <mat-card-title>File Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">File Name:</span>
+            <span class="info-value">{{ pod.fileMetadata.originalName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">File Size:</span>
+            <span class="info-value">{{ formatFileSize(pod.fileMetadata.size) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">File Type:</span>
+            <span class="info-value">{{ pod.fileMetadata.mimeType }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Upload Date:</span>
+            <span class="info-value">{{ formatDate(pod.fileMetadata.uploadedAt) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Client Identifier:</span>
+            <span class="info-value">{{ pod.clientIdentifier || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Processing Status:</span>
+            <app-status-badge [status]="pod.status"></app-status-badge>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Validation Result Card -->
+    <mat-card class="section-card" *ngIf="pod.validationResult">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>verified</mat-icon>
+        <mat-card-title>Validation Result</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="validation-status">
+          <app-status-badge [status]="pod.validationResult.status"></app-status-badge>
+          <p class="validation-summary">{{ pod.validationResult.summary }}</p>
+          <p class="validation-timestamp">
+            Validated at: {{ formatDate(pod.validationResult.timestamp) }}
+          </p>
+        </div>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <!-- Validation Checks -->
+        <h3 class="section-title">Validation Checks</h3>
+
+        <!-- Signatures Check -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>draw</mat-icon>
+              Signatures
+            </mat-panel-title>
+            <mat-panel-description>
+              Found {{ pod.validationResult.checks.signatures.found }} of {{ pod.validationResult.checks.signatures.expected }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="check-details">
+            <div class="check-item">
+              <mat-icon [class]="getCheckClass(pod.validationResult.checks.signatures.driverPresent)">
+                {{ getCheckIcon(pod.validationResult.checks.signatures.driverPresent) }}
+              </mat-icon>
+              <span>Driver Signature</span>
+            </div>
+            <div class="check-item">
+              <mat-icon [class]="getCheckClass(pod.validationResult.checks.signatures.receiverPresent)">
+                {{ getCheckIcon(pod.validationResult.checks.signatures.receiverPresent) }}
+              </mat-icon>
+              <span>Receiver Signature</span>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Image Quality Check -->
+        <mat-expansion-panel *ngIf="pod.validationResult.checks.imageQuality">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>image</mat-icon>
+              Image Quality
+            </mat-panel-title>
+            <mat-panel-description>
+              {{ pod.validationResult.checks.imageQuality.blurry ? 'Issues Detected' : 'Good Quality' }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="check-details">
+            <div class="check-item">
+              <mat-icon [class]="getCheckClass(!pod.validationResult.checks.imageQuality.blurry)">
+                {{ getCheckIcon(!pod.validationResult.checks.imageQuality.blurry) }}
+              </mat-icon>
+              <span>Blur Check {{ pod.validationResult.checks.imageQuality.blurScore ? '(Score: ' + pod.validationResult.checks.imageQuality.blurScore.toFixed(2) + ')' : '' }}</span>
+            </div>
+            <div class="check-item">
+              <mat-icon [class]="getCheckClass(!pod.validationResult.checks.imageQuality.lowContrast)">
+                {{ getCheckIcon(!pod.validationResult.checks.imageQuality.lowContrast) }}
+              </mat-icon>
+              <span>Contrast Check</span>
+            </div>
+            <div class="check-item">
+              <mat-icon [class]="getCheckClass(!pod.validationResult.checks.imageQuality.incomplete)">
+                {{ getCheckIcon(!pod.validationResult.checks.imageQuality.incomplete) }}
+              </mat-icon>
+              <span>Completeness Check</span>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Required Fields Check -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>checklist</mat-icon>
+              Required Fields
+            </mat-panel-title>
+            <mat-panel-description>
+              {{ pod.validationResult.checks.requiredFields.present.length }} present,
+              {{ pod.validationResult.checks.requiredFields.missing.length }} missing
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="check-details">
+            <div *ngIf="pod.validationResult.checks.requiredFields.present.length > 0">
+              <h4>Present Fields:</h4>
+              <div class="field-list">
+                <span *ngFor="let field of pod.validationResult.checks.requiredFields.present" class="field-chip present">
+                  <mat-icon>check</mat-icon>
+                  {{ field }}
+                </span>
+              </div>
+            </div>
+            <div *ngIf="pod.validationResult.checks.requiredFields.missing.length > 0">
+              <h4>Missing Fields:</h4>
+              <div class="field-list">
+                <span *ngFor="let field of pod.validationResult.checks.requiredFields.missing" class="field-chip missing">
+                  <mat-icon>close</mat-icon>
+                  {{ field }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Items Validation Check -->
+        <mat-expansion-panel *ngIf="pod.validationResult.checks.itemsValidation">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>inventory_2</mat-icon>
+              Items Validation
+            </mat-panel-title>
+            <mat-panel-description>
+              {{ pod.validationResult.checks.itemsValidation.matched ? 'All items matched' : 'Discrepancies found' }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="check-details">
+            <div *ngIf="pod.validationResult.checks.itemsValidation.discrepancies.length === 0">
+              <p class="success-message">All items matched expected data</p>
+            </div>
+            <div *ngIf="pod.validationResult.checks.itemsValidation.discrepancies.length > 0">
+              <mat-list>
+                <mat-list-item *ngFor="let discrepancy of pod.validationResult.checks.itemsValidation.discrepancies">
+                  <mat-icon matListItemIcon class="discrepancy-icon">warning</mat-icon>
+                  <div matListItemTitle>{{ discrepancy.itemCode }}</div>
+                  <div matListItemLine>
+                    Type: {{ discrepancy.type }}
+                    <span *ngIf="discrepancy.expected !== undefined">
+                      (Expected: {{ discrepancy.expected }}, Delivered: {{ discrepancy.delivered }})
+                    </span>
+                  </div>
+                </mat-list-item>
+              </mat-list>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <!-- Peculiarities -->
+        <h3 class="section-title">Issues & Peculiarities</h3>
+        <app-peculiarity-list [peculiarities]="pod.validationResult.peculiarities"></app-peculiarity-list>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Delivery Validation Checklist (if part of delivery) -->
+    <app-validation-checklist
+      *ngIf="deliveryValidation?.validation?.checklist"
+      [checklist]="deliveryValidation.validation.checklist">
+    </app-validation-checklist>
+
+    <!-- Extracted Data Card -->
+    <mat-card class="section-card" *ngIf="pod.extractedData">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>text_snippet</mat-icon>
+        <mat-card-title>Extracted Data</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Normalized Data</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="extracted-data">
+            <div class="info-item">
+              <span class="info-label">Delivery Date:</span>
+              <span class="info-value">
+                {{ pod.extractedData.normalized.deliveryDate ? formatDate(pod.extractedData.normalized.deliveryDate) : 'N/A' }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Recipient Name:</span>
+              <span class="info-value">{{ pod.extractedData.normalized.recipientName || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Recipient Address:</span>
+              <span class="info-value">{{ pod.extractedData.normalized.recipientAddress || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Driver Name:</span>
+              <span class="info-value">{{ pod.extractedData.normalized.driverName || 'N/A' }}</span>
+            </div>
+            <div class="info-item" *ngIf="pod.extractedData.normalized.remarks">
+              <span class="info-label">Remarks:</span>
+              <span class="info-value">{{ pod.extractedData.normalized.remarks }}</span>
+            </div>
+
+            <h4 *ngIf="pod.extractedData.normalized.items.length > 0">Delivery Items:</h4>
+            <table class="items-table" *ngIf="pod.extractedData.normalized.items.length > 0">
+              <thead>
+                <tr>
+                  <th>Item Code</th>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Unit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of pod.extractedData.normalized.items">
+                  <td>{{ item.itemCode }}</td>
+                  <td>{{ item.description }}</td>
+                  <td>{{ item.deliveredQuantity }}</td>
+                  <td>{{ item.unit || 'pcs' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Raw Text (OCR Output)</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="raw-text">
+            <pre>{{ pod.extractedData.rawText }}</pre>
+          </div>
+        </mat-expansion-panel>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Processing Metadata Card -->
+    <mat-card class="section-card" *ngIf="pod.processingMetadata">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>settings</mat-icon>
+        <mat-card-title>Processing Metadata</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Processed At:</span>
+            <span class="info-value">{{ formatDate(pod.processingMetadata.processedAt) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Processing Time:</span>
+            <span class="info-value">{{ pod.processingMetadata.processingTimeMs }} ms</span>
+          </div>
+          <div class="info-item" *ngIf="pod.processingMetadata.ocrEngine">
+            <span class="info-label">OCR Engine:</span>
+            <span class="info-value">{{ pod.processingMetadata.ocrEngine }}</span>
+          </div>
+          <div class="info-item" *ngIf="pod.processingMetadata.ocrConfidence !== undefined">
+            <span class="info-label">OCR Confidence:</span>
+            <span class="info-value">{{ pod.processingMetadata.ocrConfidence.toFixed(2) }}%</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

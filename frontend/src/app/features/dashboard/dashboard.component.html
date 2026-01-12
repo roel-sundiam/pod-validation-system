@@ -1,0 +1,385 @@
+<div class="dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="header-title">
+        <mat-icon class="header-icon">dashboard</mat-icon>
+        <div>
+          <h1>Deliveries Dashboard</h1>
+          <p class="header-subtitle">
+            Monitor and manage your document deliveries
+          </p>
+        </div>
+      </div>
+      <button
+        mat-fab
+        extended
+        color="primary"
+        (click)="refreshData()"
+        [disabled]="isLoading"
+      >
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Summary Cards -->
+  <div class="stats-container" *ngIf="!isLoadingStats && statistics">
+    <mat-card class="stat-card">
+      <div class="stat-icon-wrapper">
+        <mat-icon class="stat-icon">assessment</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Processed</div>
+        <div class="stat-value">{{ statistics.totalProcessed }}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card pass">
+      <div class="stat-icon-wrapper">
+        <mat-icon class="stat-icon">check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Passed</div>
+        <div class="stat-value">{{ statistics.statusBreakdown.pass }}</div>
+        <div class="stat-percentage">{{ getPassPercentage() }}%</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card review">
+      <div class="stat-icon-wrapper">
+        <mat-icon class="stat-icon">warning</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">For Review</div>
+        <div class="stat-value">{{ statistics.statusBreakdown.review }}</div>
+        <div class="stat-percentage">{{ getReviewPercentage() }}%</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card fail">
+      <div class="stat-icon-wrapper">
+        <mat-icon class="stat-icon">cancel</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Failed</div>
+        <div class="stat-value">{{ statistics.statusBreakdown.fail }}</div>
+        <div class="stat-percentage">{{ getFailPercentage() }}%</div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <div class="filters-header">
+      <mat-icon>filter_alt</mat-icon>
+      <span>Filters</span>
+    </div>
+    <div class="filters-grid">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Status</mat-label>
+        <mat-select
+          [(ngModel)]="statusFilter"
+          (selectionChange)="onFilterChange()"
+        >
+          <mat-option value="">All Statuses</mat-option>
+          <mat-option value="UPLOADED">
+            <mat-icon class="status-icon uploaded">cloud_upload</mat-icon>
+            Uploaded
+          </mat-option>
+          <mat-option value="PROCESSING">
+            <mat-icon class="status-icon processing">autorenew</mat-icon>
+            Processing
+          </mat-option>
+          <mat-option value="COMPLETED">
+            <mat-icon class="status-icon completed">check_circle</mat-icon>
+            Completed
+          </mat-option>
+          <mat-option value="FAILED">
+            <mat-icon class="status-icon failed">error</mat-icon>
+            Failed
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Client Identifier</mat-label>
+        <mat-icon matPrefix>business</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="clientFilter"
+          placeholder="Enter client ID"
+          (keyup.enter)="onFilterChange()"
+        />
+        <button
+          matSuffix
+          mat-icon-button
+          *ngIf="clientFilter"
+          (click)="clientFilter = ''; onFilterChange()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onFilterChange()"
+          class="apply-btn"
+        >
+          <mat-icon>search</mat-icon>
+          Apply Filters
+        </button>
+
+        <button mat-stroked-button (click)="clearFilters()" class="clear-btn">
+          <mat-icon>clear_all</mat-icon>
+          Clear All
+        </button>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Main Content Card -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      <!-- Loading Spinner -->
+      <div class="loading-container" *ngIf="isLoading">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading deliveries...</p>
+      </div>
+
+      <!-- Deliveries List -->
+      <div class="deliveries-container" *ngIf="!isLoading">
+        <!-- Column Headers -->
+        <div class="deliveries-header">
+          <div class="header-col col-delivery">
+            <mat-icon>inventory_2</mat-icon>
+            <span>Delivery ID</span>
+          </div>
+          <div class="header-col col-client">
+            <mat-icon>business</mat-icon>
+            <span>Client</span>
+          </div>
+          <div class="header-col col-documents">
+            <mat-icon>description</mat-icon>
+            <span>Documents</span>
+          </div>
+          <div class="header-col col-status">
+            <mat-icon>info</mat-icon>
+            <span>Status</span>
+          </div>
+          <div class="header-col col-validation">
+            <mat-icon>verified</mat-icon>
+            <span>Validation</span>
+          </div>
+          <div class="header-col col-date">
+            <mat-icon>schedule</mat-icon>
+            <span>Date / Time</span>
+          </div>
+        </div>
+        <mat-accordion multi="true">
+          <mat-expansion-panel
+            *ngFor="let delivery of deliveries"
+            (opened)="loadDeliveryValidation(delivery._id)"
+          >
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="delivery-row">
+                  <div class="row-col col-delivery">
+                    <span class="delivery-ref">{{
+                      delivery.deliveryReference
+                    }}</span>
+                  </div>
+                  <div class="row-col col-client">
+                    <span class="delivery-client">{{
+                      delivery.clientIdentifier || "-"
+                    }}</span>
+                  </div>
+                  <div class="row-col col-documents">
+                    <span class="doc-count">{{
+                      delivery.documents.length
+                    }}</span>
+                  </div>
+                  <div class="row-col col-status">
+                    <app-status-badge
+                      [status]="delivery.status"
+                    ></app-status-badge>
+                  </div>
+                  <div class="row-col col-validation">
+                    <app-status-badge
+                      *ngIf="delivery.deliveryValidation"
+                      [status]="delivery.deliveryValidation.status"
+                    >
+                    </app-status-badge>
+                    <span
+                      *ngIf="!delivery.deliveryValidation"
+                      class="no-validation"
+                      >-</span
+                    >
+                  </div>
+                  <div class="row-col col-date">
+                    <span class="upload-date">{{
+                      formatDate(delivery.uploadedAt)
+                    }}</span>
+                  </div>
+                </div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <!-- Delivery Details -->
+            <div class="delivery-details">
+              <!-- Validation Checklist -->
+              <app-validation-checklist
+                *ngIf="
+                  getDeliveryValidation(delivery._id)?.validation?.checklist
+                "
+                [checklist]="
+                  getDeliveryValidation(delivery._id)!.validation.checklist!
+                "
+                [documents]="delivery.documents"
+              >
+              </app-validation-checklist>
+
+              <!-- Loading validation -->
+              <div
+                *ngIf="!getDeliveryValidation(delivery._id)"
+                class="loading-validation"
+              >
+                <mat-spinner diameter="30"></mat-spinner>
+                <p>Loading validation checklist...</p>
+              </div>
+
+              <!-- No checklist available -->
+              <div
+                *ngIf="
+                  getDeliveryValidation(delivery._id) &&
+                  !getDeliveryValidation(delivery._id)?.validation?.checklist
+                "
+                class="no-checklist"
+              >
+                <mat-icon>info</mat-icon>
+                <p>No validation checklist available</p>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+
+        <table
+          mat-table
+          [dataSource]="pods"
+          class="pods-table"
+          style="display: none"
+        >
+          <!-- File Name Column -->
+          <ng-container matColumnDef="fileName">
+            <th mat-header-cell *matHeaderCellDef>File Name</th>
+            <td mat-cell *matCellDef="let pod">
+              <div class="file-info">
+                <mat-icon>description</mat-icon>
+                <span>{{ pod.fileMetadata.originalName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Upload Date Column -->
+          <ng-container matColumnDef="uploadDate">
+            <th mat-header-cell *matHeaderCellDef>Upload Date</th>
+            <td mat-cell *matCellDef="let pod">
+              {{ formatDate(pod.createdAt) }}
+            </td>
+          </ng-container>
+
+          <!-- Client Column -->
+          <ng-container matColumnDef="client">
+            <th mat-header-cell *matHeaderCellDef>Client</th>
+            <td mat-cell *matCellDef="let pod">
+              <span *ngIf="pod.clientIdentifier">{{
+                pod.clientIdentifier
+              }}</span>
+              <span *ngIf="!pod.clientIdentifier" class="no-data">N/A</span>
+            </td>
+          </ng-container>
+
+          <!-- Processing Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Processing</th>
+            <td mat-cell *matCellDef="let pod">
+              <app-status-badge [status]="pod.status"></app-status-badge>
+            </td>
+          </ng-container>
+
+          <!-- Validation Status Column -->
+          <ng-container matColumnDef="validationStatus">
+            <th mat-header-cell *matHeaderCellDef>Validation</th>
+            <td mat-cell *matCellDef="let pod">
+              <app-status-badge
+                *ngIf="pod.status === 'COMPLETED' && pod.validationResult"
+                [status]="pod.validationResult.status"
+              >
+              </app-status-badge>
+              <span *ngIf="pod.status !== 'COMPLETED'" class="no-data">-</span>
+            </td>
+          </ng-container>
+
+          <!-- Peculiarities Column -->
+          <ng-container matColumnDef="peculiarities">
+            <th mat-header-cell *matHeaderCellDef>Issues</th>
+            <td mat-cell *matCellDef="let pod">
+              <span *ngIf="pod.status === 'COMPLETED'">
+                {{ getPeculiarityCount(pod) }}
+              </span>
+              <span *ngIf="pod.status !== 'COMPLETED'" class="no-data">-</span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let pod">
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="viewDetails(pod)"
+                matTooltip="View Details"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="table-row"
+            (click)="viewDetails(row)"
+          ></tr>
+        </table>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="deliveries.length === 0">
+          <mat-icon>inbox</mat-icon>
+          <h3>No deliveries found</h3>
+          <p>Upload files to start validating deliveries</p>
+          <button mat-raised-button color="primary" routerLink="/upload">
+            <mat-icon>cloud_upload</mat-icon>
+            Upload Files
+          </button>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator
+        *ngIf="!isLoading && deliveries.length > 0"
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+      >
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

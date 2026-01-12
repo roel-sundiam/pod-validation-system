@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Super 8 POD Validation Guide</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 5px;
+      }
+
+      .header p {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 25px;
+      }
+
+      .flowchart-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+      }
+
+      .flowchart-section h2 {
+        color: #333;
+        font-size: 18px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .flow-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .flow-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .flow-box {
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #333;
+        min-width: 130px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .flow-box.process {
+        background: #e8eef7;
+        border-color: #667eea;
+      }
+
+      .flow-box.decision {
+        background: #fff3cd;
+        border-color: #ffc107;
+        border-width: 2px;
+      }
+
+      .flow-box.pass {
+        background: #d4edda;
+        border-color: #28a745;
+        border-width: 2px;
+      }
+
+      .flow-box.review {
+        background: #fff3cd;
+        border-color: #ff9800;
+        border-width: 2px;
+      }
+
+      .arrow {
+        font-size: 16px;
+        color: #667eea;
+        font-weight: bold;
+      }
+
+      .label {
+        font-size: 11px;
+        color: #666;
+        font-weight: 600;
+      }
+
+      .section {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        border-radius: 5px;
+      }
+
+      .section h3 {
+        color: #667eea;
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+
+      .section p {
+        color: #555;
+        line-height: 1.6;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+
+      .doc-type {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .doc-card {
+        background: white;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #764ba2;
+        font-size: 13px;
+      }
+
+      .doc-card strong {
+        color: #764ba2;
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .doc-card ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .doc-card li {
+        color: #666;
+        padding: 3px 0;
+        font-size: 12px;
+      }
+
+      .doc-card li:before {
+        content: "✓ ";
+        color: #667eea;
+        font-weight: bold;
+        margin-right: 5px;
+      }
+
+      .scenario {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-top: 3px solid #667eea;
+      }
+
+      .scenario.with-pallets {
+        border-top-color: #28a745;
+      }
+
+      .scenario.without-pallets {
+        border-top-color: #ffc107;
+      }
+
+      .scenario h4 {
+        color: #333;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .scenario ul {
+        margin-left: 20px;
+        font-size: 13px;
+      }
+
+      .scenario li {
+        margin: 5px 0;
+        color: #555;
+      }
+
+      .legend {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      .legend-color {
+        width: 30px;
+        height: 20px;
+        border-radius: 3px;
+        border: 1px solid #ddd;
+      }
+
+      .footer {
+        background: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+        border-top: 1px solid #ddd;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          max-width: 100%;
+        }
+
+        .header h1 {
+          font-size: 22px;
+        }
+
+        .content {
+          padding: 15px;
+        }
+
+        .section,
+        .flowchart-section {
+          padding: 15px;
+        }
+
+        .flow-box {
+          min-width: 110px;
+          padding: 8px 10px;
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Super 8 POD Validation Guide</h1>
+        <p>Complete Proof of Delivery Validation Workflow</p>
+      </div>
+
+      <div class="content">
+        <!-- MAIN FLOWCHART -->
+        <div class="flowchart-section">
+          <h2>Validation Process Flow</h2>
+          <div class="flow-container">
+            <div class="flow-row">
+              <div class="flow-box process">Upload Documents</div>
+            </div>
+            <div class="flow-row">
+              <span class="arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box process">Sort All Documents</div>
+            </div>
+            <div class="flow-row">
+              <span class="arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box decision">Pallet Documents Present?</div>
+            </div>
+            <div class="flow-row">
+              <div style="display: flex; gap: 40px; align-items: center">
+                <div style="text-align: center">
+                  <span class="label">YES</span><br />
+                  <span class="arrow">↓</span>
+                </div>
+                <div style="text-align: center">
+                  <span class="label">NO</span><br />
+                  <span class="arrow">↓</span>
+                </div>
+              </div>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box process">Check Pallet Documents</div>
+              <div class="flow-box process">Skip Pallet Check</div>
+            </div>
+            <div class="flow-row">
+              <span class="arrow">↓</span>
+              <span style="margin: 0 30px"></span>
+              <span class="arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box process" style="min-width: 200px">
+                Check Ship Document (Always Required)
+              </div>
+            </div>
+            <div class="flow-row">
+              <span class="arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box process">Check Invoice and Items</div>
+            </div>
+            <div class="flow-row">
+              <span class="arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box decision">All Validations Passed?</div>
+            </div>
+            <div class="flow-row">
+              <div style="display: flex; gap: 40px; align-items: center">
+                <div style="text-align: center">
+                  <span class="label">YES</span><br />
+                  <span class="arrow">↓</span>
+                </div>
+                <div style="text-align: center">
+                  <span class="label">NO</span><br />
+                  <span class="arrow">↓</span>
+                </div>
+              </div>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box pass">PASS</div>
+              <div class="flow-box review">REVIEW</div>
+            </div>
+            <div class="flow-row">
+              <span class="arrow">↓</span>
+              <span style="margin: 0 30px"></span>
+              <span class="arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box" style="min-width: 200px">
+                Generate Report
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VALIDATION STEPS -->
+        <div class="section">
+          <h3>7 Validation Steps</h3>
+          <p>
+            <strong>Step 1:</strong> Receive all uploaded documents from
+            delivery
+          </p>
+          <p>
+            <strong>Step 2:</strong> System sorts documents by type (Pallet
+            docs, Ship docs, Invoice, etc.)
+          </p>
+          <p>
+            <strong>Step 3:</strong> Check if pallet documents are included in
+            delivery
+          </p>
+          <p>
+            <strong>Step 4:</strong> If pallets present, validate all
+            pallet-related documents
+          </p>
+          <p>
+            <strong>Step 5:</strong> Validate ship or shipment document (ALWAYS
+            required)
+          </p>
+          <p>
+            <strong>Step 6:</strong> Validate invoice and match quantities
+            across all documents
+          </p>
+          <p>
+            <strong>Step 7:</strong> Generate final validation result (PASS or
+            REVIEW)
+          </p>
+        </div>
+
+        <!-- DOCUMENT TYPES -->
+        <div class="section">
+          <h3>Document Types and Requirements</h3>
+          <div class="doc-type">
+            <div class="doc-card">
+              <strong>Pallet Issuance Letter</strong>
+              <ul>
+                <li>Driver signature</li>
+                <li>Warehouse stamp</li>
+                <li>Warehouse signature</li>
+                <li>Pallet counts</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <strong>Pallet Exchange Document</strong>
+              <ul>
+                <li>Sender signature</li>
+                <li>Receiver signature</li>
+                <li>Transaction details</li>
+                <li>Pallet type tracking</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <strong>Pallet Receipt Confirmation</strong>
+              <ul>
+                <li>Warehouse receiver name</li>
+                <li>Receiver signature</li>
+                <li>Acknowledger signature</li>
+                <li>Date and time</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <strong>Ship or Shipment Document</strong>
+              <ul>
+                <li>Dispatch stamp</li>
+                <li>Pallet confirmation</li>
+                <li>Security signature</li>
+                <li>Date and time out</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <strong>Invoice</strong>
+              <ul>
+                <li>All pages present</li>
+                <li>PO number match</li>
+                <li>Item quantities</li>
+                <li>Total case count</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <strong>Receiving Acknowledgement</strong>
+              <ul>
+                <li>Item-by-item list</li>
+                <li>Quantities received</li>
+                <li>Damage notes</li>
+                <li>Both signatures</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENARIOS -->
+        <div class="section">
+          <h3>Validation Scenarios</h3>
+
+          <div class="scenario with-pallets">
+            <h4>Scenario: WITH PALLETS</h4>
+            <ul>
+              <li>
+                Required: Pallet Issuance Letter + Pallet Exchange Doc + Pallet
+                Receipt Confirmation
+              </li>
+              <li>
+                Always validate: Ship Document + Invoice + Receiving
+                Acknowledgement
+              </li>
+              <li>
+                Check: Pallet counts match, all signatures present, stamps
+                visible
+              </li>
+              <li>Result: PASS if all 6 validations successful</li>
+            </ul>
+          </div>
+
+          <div class="scenario without-pallets">
+            <h4>Scenario: WITHOUT PALLETS</h4>
+            <ul>
+              <li>Skip: Pallet document validation</li>
+              <li>
+                Always validate: Ship Document + Invoice + Receiving
+                Acknowledgement
+              </li>
+              <li>
+                Check: No Pallet stamp on ship document, all signatures present
+              </li>
+              <li>Result: PASS if all 3 validations successful</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- KEY VALIDATION RULES -->
+        <div class="section">
+          <h3>Key Validation Rules</h3>
+          <p>
+            <strong>Signature Requirements:</strong> Minimum 2 signatures
+            required (Driver and Receiver or Warehouse)
+          </p>
+          <p>
+            <strong>Quantity Matching:</strong> Item quantities must match
+            across Invoice, Ship Document, and Receipt
+          </p>
+          <p>
+            <strong>Timestamp:</strong> All documents must have dates and times
+            consistent with delivery timeline
+          </p>
+          <p>
+            <strong>Damage Notation:</strong> Any damaged items flagged for
+            review but do not block PASS status
+          </p>
+          <p>
+            <strong>PO Number:</strong> Invoice PO must match Receipt PO number
+            exactly
+          </p>
+          <p>
+            <strong>Stamps and Marks:</strong> Required stamps must be clearly
+            visible (dispatch, pallet, security)
+          </p>
+        </div>
+
+        <!-- VALIDATION OUTCOMES -->
+        <div class="section">
+          <h3>Validation Outcomes</h3>
+
+          <div class="scenario" style="border-top-color: #28a745">
+            <h4>PASS</h4>
+            <ul>
+              <li>All required documents present with valid signatures</li>
+              <li>All quantities match across documents</li>
+              <li>All required stamps and marks visible</li>
+              <li>PO numbers match exactly</li>
+              <li>Delivery can be processed immediately</li>
+            </ul>
+          </div>
+
+          <div class="scenario" style="border-top-color: #ffc107">
+            <h4>REVIEW</h4>
+            <ul>
+              <li>
+                Minor issues detected (damage noted, slight discrepancies)
+              </li>
+              <li>Missing non-critical signatures or stamps</li>
+              <li>Quantity variance within acceptable tolerance</li>
+              <li>Requires manual review by processor</li>
+              <li>May result in PASS after review</li>
+            </ul>
+          </div>
+
+          <div class="scenario" style="border-top-color: #dc3545">
+            <h4>FAIL</h4>
+            <ul>
+              <li>Critical documents missing</li>
+              <li>Required signatures absent</li>
+              <li>Quantity shortage detected</li>
+              <li>PO number mismatch</li>
+              <li>Delivery cannot be processed - escalation required</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- LEGEND -->
+        <div class="section">
+          <h3>Flowchart Legend</h3>
+          <div class="legend">
+            <div class="legend-item">
+              <div
+                class="legend-color"
+                style="
+                  background-color: #e8eef7;
+                  border-color: #667eea;
+                  border-width: 2px;
+                "
+              ></div>
+              <span>Process Step</span>
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-color"
+                style="
+                  background-color: #fff3cd;
+                  border-color: #ffc107;
+                  border-width: 2px;
+                "
+              ></div>
+              <span>Decision Point</span>
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-color"
+                style="
+                  background-color: #d4edda;
+                  border-color: #28a745;
+                  border-width: 2px;
+                "
+              ></div>
+              <span>Pass Result</span>
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-color"
+                style="
+                  background-color: #fff3cd;
+                  border-color: #ff9800;
+                  border-width: 2px;
+                "
+              ></div>
+              <span>Review Required</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Super 8 POD Validation System - For Clients and Processors</p>
+        <p style="margin-top: 5px; opacity: 0.7">
+          Last Updated: January 11, 2026
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

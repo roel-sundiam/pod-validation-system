@@ -1,0 +1,336 @@
+<div class="config-editor-container">
+  <mat-card class="header-card">
+    <mat-card-header>
+      <button mat-icon-button routerLink="/admin/clients" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <mat-card-title>
+        <mat-icon>{{ isEditMode ? "edit" : "add_circle" }}</mat-icon>
+        {{ isEditMode ? "Edit" : "New" }} Client Configuration
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{
+          isEditMode
+            ? "Update validation rules for " + clientId
+            : "Create a new client validation configuration"
+        }}
+      </mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
+
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading configuration...</p>
+  </div>
+
+  <form [formGroup]="configForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+    <!-- Basic Information -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>Basic Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Client ID</mat-label>
+            <input
+              matInput
+              formControlName="clientId"
+              placeholder="e.g., ACME_CORP"
+              [readonly]="isEditMode"
+            />
+            <mat-hint
+              >Uppercase letters, numbers, and underscores only</mat-hint
+            >
+            <mat-error *ngIf="configForm.get('clientId')?.hasError('required')">
+              Client ID is required
+            </mat-error>
+            <mat-error *ngIf="configForm.get('clientId')?.hasError('pattern')">
+              Only uppercase letters, numbers, and underscores allowed
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Client Name</mat-label>
+            <input
+              matInput
+              formControlName="clientName"
+              placeholder="e.g., ACME Corporation"
+            />
+            <mat-error
+              *ngIf="configForm.get('clientName')?.hasError('required')"
+            >
+              Client name is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea
+              matInput
+              formControlName="description"
+              rows="3"
+              placeholder="Optional description of client requirements"
+            ></textarea>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Document Completeness -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Document Completeness Requirements
+        </mat-card-title>
+        <mat-card-subtitle
+          >Select which documents are required for this
+          client</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-content formGroupName="documentCompleteness">
+        <div class="checkbox-grid">
+          <mat-checkbox formControlName="requireInvoice">
+            <strong>Invoice</strong> - Customer invoice document
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireRAR">
+            <strong>RAR (Receiving Report)</strong> - Goods receiving document
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireShipDocument">
+            <strong>Ship Document</strong> - Shipping/dispatch document
+          </mat-checkbox>
+          <mat-checkbox formControlName="requirePalletNotificationLetter">
+            <strong>Pallet Notification Letter</strong> - Pallet usage
+            notification
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireLoscamDocument">
+            <strong>Loscam Document</strong> - Loscam pallet document
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireCustomerPalletReceiving">
+            <strong>Customer Pallet Receiving</strong> - Customer pallet receipt
+          </mat-checkbox>
+        </div>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Pallet Scenario</mat-label>
+          <mat-select formControlName="palletScenario">
+            <mat-option value="AUTO_DETECT">Auto-detect (default)</mat-option>
+            <mat-option value="WITH_PALLETS">Always with pallets</mat-option>
+            <mat-option value="WITHOUT_PALLETS"
+              >Always without pallets</mat-option
+            >
+          </mat-select>
+          <mat-hint>Determines pallet document requirements</mat-hint>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Pallet Validation -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>local_shipping</mat-icon>
+          Pallet Document Validation
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content formGroupName="palletValidation">
+        <div class="enable-section">
+          <mat-checkbox formControlName="enabled">
+            <strong>Enable Pallet Document Validation</strong>
+          </mat-checkbox>
+        </div>
+
+        <div
+          class="checkbox-grid"
+          *ngIf="configForm.get('palletValidation.enabled')?.value"
+        >
+          <mat-checkbox formControlName="requireWarehouseStamp">
+            Warehouse Stamp Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireWarehouseSignature">
+            Warehouse Signature Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireCustomerSignature">
+            Customer Signature Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireDriverSignature">
+            Driver Signature Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireLoscamStamp">
+            Loscam Stamp Required
+          </mat-checkbox>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Ship Document Validation -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>inventory_2</mat-icon>
+          Ship Document Validation
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content formGroupName="shipDocumentValidation">
+        <div class="enable-section">
+          <mat-checkbox formControlName="enabled">
+            <strong>Enable Ship Document Validation</strong>
+          </mat-checkbox>
+        </div>
+
+        <div
+          class="checkbox-grid"
+          *ngIf="configForm.get('shipDocumentValidation.enabled')?.value"
+        >
+          <mat-checkbox formControlName="requireDispatchStamp">
+            Dispatch Stamp Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requirePalletStamp">
+            Pallet Stamp Required (WITH_PALLETS scenario)
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireNoPalletStamp">
+            No Pallet Stamp Required (WITHOUT_PALLETS scenario)
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireSecuritySignature">
+            Security Signature Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireTimeOutField">
+            Time Out Field Required
+          </mat-checkbox>
+          <mat-checkbox formControlName="requireDriverSignature">
+            Driver Signature Required
+          </mat-checkbox>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Invoice Validation -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>receipt</mat-icon>
+          Invoice Validation
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content formGroupName="invoiceValidation">
+        <div class="enable-section">
+          <mat-checkbox formControlName="enabled">
+            <strong>Enable Invoice Validation</strong>
+          </mat-checkbox>
+        </div>
+
+        <div *ngIf="configForm.get('invoiceValidation.enabled')?.value">
+          <div class="checkbox-grid">
+            <mat-checkbox formControlName="requirePOMatch">
+              PO Number Match Required
+            </mat-checkbox>
+            <mat-checkbox formControlName="requireTotalCasesMatch">
+              Total Cases Match Required
+            </mat-checkbox>
+            <mat-checkbox formControlName="requireItemLevelMatch">
+              Item-Level Match Required
+            </mat-checkbox>
+          </div>
+
+          <mat-divider class="section-divider"></mat-divider>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Allowed Variance Percentage</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="allowedVariancePercent"
+                min="0"
+                max="100"
+              />
+              <span matSuffix>%</span>
+              <mat-hint
+                >Acceptable difference between Invoice and RAR totals
+                (0-100%)</mat-hint
+              >
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Cross Document Validation -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>compare_arrows</mat-icon>
+          Cross-Document Validation
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content formGroupName="crossDocumentValidation">
+        <div class="enable-section">
+          <mat-checkbox formControlName="enabled">
+            <strong>Enable Cross-Document Validation</strong>
+          </mat-checkbox>
+        </div>
+
+        <div *ngIf="configForm.get('crossDocumentValidation.enabled')?.value">
+          <div class="checkbox-grid">
+            <mat-checkbox formControlName="validateInvoiceRAR">
+              Compare Invoice vs RAR
+            </mat-checkbox>
+            <mat-checkbox formControlName="strictMode">
+              Strict Mode (fail on any discrepancy)
+            </mat-checkbox>
+          </div>
+
+          <mat-divider class="section-divider"></mat-divider>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Allowed Discrepancy Count</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="allowedDiscrepancyCount"
+                min="0"
+              />
+              <mat-hint
+                >Number of item discrepancies allowed before failing</mat-hint
+              >
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <mat-card class="action-card">
+      <mat-card-actions>
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="saving || configForm.invalid"
+        >
+          <mat-spinner diameter="20" *ngIf="saving"></mat-spinner>
+          <mat-icon *ngIf="!saving">save</mat-icon>
+          {{
+            saving
+              ? "Saving..."
+              : isEditMode
+              ? "Update Configuration"
+              : "Create Configuration"
+          }}
+        </button>
+        <button mat-button type="button" (click)="cancel()" [disabled]="saving">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

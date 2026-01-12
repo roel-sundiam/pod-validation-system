@@ -1,0 +1,144 @@
+<div class="client-list-container">
+  <mat-card class="header-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>settings</mat-icon>
+        Client Validation Configuration
+      </mat-card-title>
+      <mat-card-subtitle>
+        Manage validation rules for each client
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" routerLink="/admin/clients/new">
+        <mat-icon>add</mat-icon>
+        New Client
+      </button>
+      <button mat-button (click)="clearCache()">
+        <mat-icon>refresh</mat-icon>
+        Clear All Cache
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card class="table-card">
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading clients...</p>
+    </div>
+
+    <div *ngIf="error && !loading" class="error-container">
+      <mat-icon color="warn">error</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-button (click)="loadClients()">Retry</button>
+    </div>
+
+    <div *ngIf="!loading && !error" class="table-container">
+      <table mat-table [dataSource]="clients" class="clients-table">
+        <!-- Client ID Column -->
+        <ng-container matColumnDef="clientId">
+          <th mat-header-cell *matHeaderCellDef>Client ID</th>
+          <td mat-cell *matCellDef="let client">
+            <strong>{{ client.clientId }}</strong>
+            <mat-icon
+              *ngIf="client.clientId === 'SUPER8'"
+              class="super8-icon"
+              matTooltip="Protected: Cannot be deleted"
+            >
+              lock
+            </mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- Client Name Column -->
+        <ng-container matColumnDef="clientName">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let client">{{ client.clientName }}</td>
+        </ng-container>
+
+        <!-- Description Column -->
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let client">
+            <span class="description-text">{{
+              client.description || "No description"
+            }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Validation Types Column -->
+        <ng-container matColumnDef="validationTypes">
+          <th mat-header-cell *matHeaderCellDef>Validation Types</th>
+          <td mat-cell *matCellDef="let client">
+            <mat-chip-set>
+              <mat-chip *ngFor="let type of getValidationTypes(client)">
+                {{ type }}
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
+        <!-- Updated At Column -->
+        <ng-container matColumnDef="updatedAt">
+          <th mat-header-cell *matHeaderCellDef>Last Updated</th>
+          <td mat-cell *matCellDef="let client">
+            {{ formatDate(client.updatedAt) }}
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let client">
+            <button
+              mat-icon-button
+              [routerLink]="['/admin/clients', client.clientId, 'edit']"
+              matTooltip="Edit configuration"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              (click)="viewPreview(client.clientId)"
+              matTooltip="Preview validation checks"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              (click)="clearCache(client.clientId)"
+              matTooltip="Clear cache for this client"
+            >
+              <mat-icon>cached</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="deleteClient(client)"
+              [disabled]="client.clientId === 'SUPER8'"
+              matTooltip="Deactivate client"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <div *ngIf="clients.length === 0" class="no-data">
+        <mat-icon>inbox</mat-icon>
+        <p>No clients configured yet</p>
+        <button
+          mat-raised-button
+          color="primary"
+          routerLink="/admin/clients/new"
+        >
+          <mat-icon>add</mat-icon>
+          Create First Client
+        </button>
+      </div>
+    </div>
+  </mat-card>
+</div>

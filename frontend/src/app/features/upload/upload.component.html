@@ -1,0 +1,135 @@
+<div class="upload-container">
+  <mat-card class="upload-card">
+    <mat-card-header>
+      <mat-card-title>Upload Delivery Documents</mat-card-title>
+      <mat-card-subtitle>
+        Upload multiple documents as a delivery for validation (Images, PDFs,
+        Excel, or CSV files)
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Client Identifier Dropdown -->
+      <mat-form-field class="full-width mb-2" appearance="outline">
+        <mat-label>Client Identifier</mat-label>
+        <mat-select
+          [(ngModel)]="clientIdentifier"
+          [disabled]="isUploading"
+          placeholder="Select client"
+        >
+          <mat-option value="">None</mat-option>
+          <mat-option value="SUPER8">Super 8</mat-option>
+        </mat-select>
+        <mat-icon matPrefix>business</mat-icon>
+        <mat-hint>Select client identifier for delivery validation</mat-hint>
+      </mat-form-field>
+
+      <!-- Drag and Drop Zone -->
+      <div
+        class="dropzone"
+        [class.dragging]="isDragging"
+        [class.has-files]="files.length > 0"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <mat-icon class="dropzone-icon">cloud_upload</mat-icon>
+        <h3>Drag and drop files here</h3>
+        <p>or</p>
+        <label for="file-input" class="file-input-label">
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            [disabled]="isUploading"
+            (click)="fileInput.click()"
+          >
+            <mat-icon>attach_file</mat-icon>
+            Choose Files
+          </button>
+        </label>
+        <input
+          #fileInput
+          id="file-input"
+          type="file"
+          multiple
+          accept="image/*,.pdf,.csv,.xlsx,.xls"
+          (change)="onFileSelected($event)"
+          style="display: none"
+        />
+        <p class="dropzone-hint">
+          Supported formats: JPEG, PNG, PDF, Excel (.xlsx, .xls), CSV
+        </p>
+      </div>
+
+      <!-- File List -->
+      <div class="file-list" *ngIf="files.length > 0">
+        <div class="file-list-header">
+          <h3>Files to Upload ({{ files.length }})</h3>
+          <button
+            mat-button
+            color="warn"
+            (click)="clearAll()"
+            [disabled]="isUploading"
+          >
+            <mat-icon>delete</mat-icon>
+            Clear All
+          </button>
+        </div>
+
+        <div
+          class="file-item"
+          *ngFor="let uploadFile of files; let i = index"
+          [class.uploading]="uploadFile.status === 'uploading'"
+          [class.success]="uploadFile.status === 'success'"
+          [class.error]="uploadFile.status === 'error'"
+        >
+          <mat-icon [class]="'status-icon status-' + uploadFile.status">
+            {{ getStatusIcon(uploadFile.status) }}
+          </mat-icon>
+
+          <div class="file-info">
+            <div class="file-name">{{ uploadFile.file.name }}</div>
+            <div class="file-size">
+              {{ formatFileSize(uploadFile.file.size) }}
+            </div>
+            <div class="file-error" *ngIf="uploadFile.error">
+              {{ uploadFile.error }}
+            </div>
+          </div>
+
+          <div class="file-actions">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="removeFile(i)"
+              [disabled]="isUploading"
+              *ngIf="uploadFile.status === 'pending'"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <mat-progress-bar
+            *ngIf="uploadFile.status === 'uploading'"
+            mode="indeterminate"
+            class="file-progress"
+          >
+          </mat-progress-bar>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="uploadFiles()"
+        [disabled]="files.length === 0 || isUploading"
+      >
+        <mat-icon>cloud_upload</mat-icon>
+        {{ isUploading ? "Uploading..." : "Upload Files" }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

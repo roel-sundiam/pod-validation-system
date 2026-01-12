@@ -1,0 +1,271 @@
+.document-viewer-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+
+  p {
+    margin-top: 16px;
+    color: #757575;
+  }
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  .actions-right {
+    display: flex;
+    gap: 12px;
+  }
+}
+
+.section-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    margin-bottom: 16px;
+
+    mat-icon[mat-card-avatar] {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3f51b5;
+    }
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .info-label {
+    font-size: 12px;
+    color: #757575;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .info-value {
+    font-size: 14px;
+    color: #212121;
+  }
+}
+
+.validation-status {
+  text-align: center;
+  padding: 24px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 24px;
+
+  .validation-summary {
+    margin: 16px 0 8px 0;
+    font-size: 16px;
+    color: #424242;
+  }
+
+  .validation-timestamp {
+    margin: 0;
+    font-size: 12px;
+    color: #757575;
+  }
+}
+
+.section-title {
+  margin: 24px 0 16px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #212121;
+}
+
+.section-divider {
+  margin: 24px 0;
+}
+
+mat-expansion-panel {
+  margin-bottom: 12px;
+
+  mat-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      color: #3f51b5;
+    }
+  }
+}
+
+.check-details {
+  padding: 16px;
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+
+      &.check-success {
+        color: #4caf50;
+      }
+
+      &.check-fail {
+        color: #f44336;
+      }
+    }
+
+    span {
+      font-size: 14px;
+      color: #424242;
+    }
+  }
+
+  h4 {
+    margin: 16px 0 8px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #424242;
+  }
+}
+
+.field-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+
+  .field-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &.present {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    &.missing {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+  }
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4caf50;
+  padding: 16px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.discrepancy-icon {
+  color: #ff9800;
+}
+
+.extracted-data {
+  padding: 16px;
+
+  .info-item {
+    margin-bottom: 12px;
+  }
+
+  h4 {
+    margin: 24px 0 12px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #424242;
+  }
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+
+  thead {
+    background-color: #f5f5f5;
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #424242;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e0e0e0;
+
+      &:hover {
+        background-color: #fafafa;
+      }
+
+      td {
+        padding: 12px;
+        color: #424242;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.raw-text {
+  padding: 16px;
+
+  pre {
+    background-color: #f5f5f5;
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+    color: #212121;
+  }
+}
