@@ -54,3 +54,9 @@ Thumbs.db
 *.tmp
 *.temp
 ~$*
+
+# Large documentation files
+*.pdf
+*.pptx
+*.ppt
+*.docx
