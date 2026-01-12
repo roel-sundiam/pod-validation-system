@@ -194,7 +194,7 @@ export const uploadDelivery = asyncHandler(
     await delivery.save();
 
     // Create audit log for delivery
-    await createAuditLog(delivery._id, isAppending ? "UPDATE" : "UPLOAD", {
+    await createAuditLog(delivery._id, isAppending ? "PROCESS" : "UPLOAD", {
       deliveryReference: delivery.deliveryReference,
       clientIdentifier,
       documentCount: delivery.documents.length,
@@ -222,10 +222,14 @@ export const uploadDelivery = asyncHandler(
         filesReceived: files.length,
         estimatedProcessingTime,
       },
-      message: isAppending 
-        ? `Added ${files.length} images to existing delivery. Total: ${delivery.documents.length} images.`
-        : `Created new delivery with ${files.length} images.`,
     };
+
+    // Log append/create info for debugging
+    if (isAppending) {
+      logger.info(`Added ${files.length} images to existing delivery. Total: ${delivery.documents.length} images.`, {
+        deliveryId: delivery._id.toString(),
+      });
+    }
 
     res.status(200).json(response);
   }
