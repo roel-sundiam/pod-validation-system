@@ -53,7 +53,7 @@ export const uploadDelivery = asyncHandler(
     // Check if appending to existing delivery
     if (existingDeliveryId) {
       delivery = await DeliveryModel.findById(existingDeliveryId);
-      
+
       if (!delivery) {
         throw new AppError("Delivery not found", 404, "DELIVERY_NOT_FOUND");
       }
@@ -226,9 +226,12 @@ export const uploadDelivery = asyncHandler(
 
     // Log append/create info for debugging
     if (isAppending) {
-      logger.info(`Added ${files.length} images to existing delivery. Total: ${delivery.documents.length} images.`, {
-        deliveryId: delivery._id.toString(),
-      });
+      logger.info(
+        `Added ${files.length} images to existing delivery. Total: ${delivery.documents.length} images.`,
+        {
+          deliveryId: delivery._id.toString(),
+        }
+      );
     }
 
     res.status(200).json(response);
@@ -539,17 +542,13 @@ export const overrideDocumentClassification = asyncHandler(
     }
 
     // Create audit log
-    await createAuditLog(
-      podId,
-      "MANUAL_CLASSIFICATION_OVERRIDE" as any,
-      {
-        deliveryId,
-        previousType,
-        newType: detectedType,
-        reason,
-        performedBy: req.body.overrideBy || "manual",
-      }
-    );
+    await createAuditLog(podId, "MANUAL_CLASSIFICATION_OVERRIDE" as any, {
+      deliveryId,
+      previousType,
+      newType: detectedType,
+      reason,
+      performedBy: req.body.overrideBy || "manual",
+    });
 
     logger.info("Manual classification override applied", {
       deliveryId,
@@ -577,7 +576,8 @@ export const overrideDocumentClassification = asyncHandler(
           reason,
         },
         revalidationTriggered: true,
-        validationStatus: updatedDelivery?.deliveryValidation?.status || "UNKNOWN",
+        validationStatus:
+          updatedDelivery?.deliveryValidation?.status || "UNKNOWN",
       },
     });
   }
@@ -615,9 +615,15 @@ export const getDocumentDiagnostics = asyncHandler(
     // Generate suggestions based on diagnosis
     const suggestions: string[] = [];
 
-    if (ocrQuality && ocrQuality.ocrConfidence !== undefined && ocrQuality.ocrConfidence < 60) {
+    if (
+      ocrQuality &&
+      ocrQuality.ocrConfidence !== undefined &&
+      ocrQuality.ocrConfidence < 60
+    ) {
       suggestions.push(
-        `OCR confidence is low (${ocrQuality.ocrConfidence.toFixed(1)}%). Consider uploading a clearer image.`
+        `OCR confidence is low (${ocrQuality.ocrConfidence.toFixed(
+          1
+        )}%). Consider uploading a clearer image.`
       );
     }
 
@@ -629,10 +635,16 @@ export const getDocumentDiagnostics = asyncHandler(
     ) {
       const topAlt = classification.alternativeTypes[0];
       suggestions.push(
-        `Document was classified as ${topAlt.type} with ${topAlt.confidence.toFixed(1)}% confidence, just below the 25% threshold.`
+        `Document was classified as ${
+          topAlt.type
+        } with ${topAlt.confidence.toFixed(
+          1
+        )}% confidence, just below the 25% threshold.`
       );
       suggestions.push(
-        `Keywords found: ${classification.keywords.join(", ")} suggest this may be a ${topAlt.type} document.`
+        `Keywords found: ${classification.keywords.join(
+          ", "
+        )} suggest this may be a ${topAlt.type} document.`
       );
     }
 

@@ -5,7 +5,7 @@ import { ApiService } from './api.service';
 import { APIResponse, UploadResponse, JobStatus } from '../models/pod.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UploadService {
   constructor(private api: ApiService) {}
@@ -19,7 +19,7 @@ export class UploadService {
     const formData = new FormData();
 
     // Append files
-    files.forEach(file => {
+    files.forEach((file) => {
       formData.append('files', file, file.name);
     });
 
@@ -37,19 +37,21 @@ export class UploadService {
     }
 
     // Use new delivery endpoint for multi-document validation
-    return this.api.upload<APIResponse<UploadResponse>>('deliveries/upload', formData).pipe(
-      map(response => {
-        if (!response.success || !response.data) {
-          throw new Error(response.error || 'Upload failed');
-        }
-        return response.data;
-      })
-    );
+    return this.api
+      .upload<APIResponse<UploadResponse>>('deliveries/upload', formData)
+      .pipe(
+        map((response) => {
+          if (!response.success || !response.data) {
+            throw new Error(response.error || 'Upload failed');
+          }
+          return response.data;
+        })
+      );
   }
 
   getJobStatus(jobId: string): Observable<JobStatus> {
     return this.api.get<APIResponse<JobStatus>>(`pods/${jobId}/status`).pipe(
-      map(response => {
+      map((response) => {
         if (!response.success || !response.data) {
           throw new Error(response.error || 'Failed to get job status');
         }

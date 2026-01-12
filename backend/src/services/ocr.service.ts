@@ -272,7 +272,7 @@ export const extractText = async (
     logger.info("Extracting text from file", { filePath, mimeType });
 
     let result: OCRResult;
-    
+
     if (mimeType === "application/pdf") {
       result = await extractTextFromPDFDocument(filePath);
     } else if (mimeType.startsWith("image/")) {
@@ -289,7 +289,7 @@ export const extractText = async (
     }
 
     lastWorkerUsage = Date.now();
-    
+
     return result;
   } catch (error) {
     logger.error("Error extracting text", { filePath, mimeType, error });
@@ -302,12 +302,12 @@ export const extractText = async (
  */
 const terminateIdleWorkers = async (): Promise<void> => {
   const idleTime = Date.now() - lastWorkerUsage;
-  
+
   if (idleTime > WORKER_IDLE_TIMEOUT && workerPool.length > 0) {
     logger.info("Terminating idle Tesseract workers to free memory", {
-      idleTimeSeconds: Math.floor(idleTime / 1000)
+      idleTimeSeconds: Math.floor(idleTime / 1000),
     });
-    
+
     await cleanupWorkerPool();
   }
 };

@@ -183,7 +183,7 @@ export class UploadComponent {
 
       const response = await this.uploadService
         .uploadFiles(
-          filesToUpload, 
+          filesToUpload,
           this.clientIdentifier || undefined,
           this.existingDeliveryId || undefined
         )
@@ -240,15 +240,21 @@ export class UploadComponent {
         // Save delivery ID for appending more images
         if (dialogData.deliveryId && !this.existingDeliveryId) {
           this.existingDeliveryId = dialogData.deliveryId;
-          this.snackBar.open(
-            `💡 Upload 2 more images to add to this delivery (ID: ${this.existingDeliveryId.substring(0, 8)}...)`,
-            'Clear',
-            {
-              duration: 8000,
-            }
-          ).onAction().subscribe(() => {
-            this.existingDeliveryId = '';
-          });
+          this.snackBar
+            .open(
+              `💡 Upload 2 more images to add to this delivery (ID: ${this.existingDeliveryId.substring(
+                0,
+                8
+              )}...)`,
+              'Clear',
+              {
+                duration: 8000,
+              }
+            )
+            .onAction()
+            .subscribe(() => {
+              this.existingDeliveryId = '';
+            });
         }
         this.files = [];
         // Keep clientIdentifier and existingDeliveryId for next batch
@@ -285,7 +291,9 @@ export class UploadComponent {
             dialogData.stage = 'completed';
             dialogData.files.forEach((f) => (f.status = 'completed'));
             // Extract validation data from response structure
-            dialogData.validationResult = validationResponse?.data?.validation || validationResponse?.validation;
+            dialogData.validationResult =
+              validationResponse?.data?.validation ||
+              validationResponse?.validation;
             dialogData.deliveryId = deliveryId;
             dialogData.overallProgress = 100;
 
